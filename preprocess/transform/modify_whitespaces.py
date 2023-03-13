@@ -2,7 +2,7 @@
 Add or remove blanks
 """
 import random
-from typing import Union, Optional
+from typing import Union
 
 import libcst as cst
 from libcst import MaybeSentinel
@@ -10,12 +10,11 @@ from libcst import MaybeSentinel
 
 class ModifyWhiteSpaceTransformer(cst.CSTTransformer):
 
-    def __init__(self, mode: Union[bool, str]=True, p=1):
+    def __init__(self, mode: Union[bool, str] = True, p=1):
         # stack for storing the canonical name of the current function
         self.p = p
         self.mode = mode
         self.num_changes = 0
-
 
     def get_logs(self):
         if self.mode == True:

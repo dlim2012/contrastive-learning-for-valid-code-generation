@@ -7,45 +7,50 @@ from preprocess.transform.add_remove_commas import CommaTransformer
 from preprocess.transform.change_comp_to_for import ChangeCompToForTransformer
 from preprocess.transform.change_for_range_to_while import ForToWhileTransformer
 from preprocess.transform.change_lambda_to_function import LambdaToFunctionTransformer
+from preprocess.transform.change_local_variable_names import ChangeLocalVariableNameTransformer
 from preprocess.transform.combine_statements import CombineStatementsTransformer
 from preprocess.transform.modify_whitespaces import ModifyWhiteSpaceTransformer
 from preprocess.transform.remove_comments import RemoveCommentsTransformer
 from preprocess.transform.remove_empty_lines import RemoveEmptyLineTransformer
 from preprocess.transform.remove_unused_imports import RemoveUnusedImportTransformer
-from preprocess.transform.utils.new_names import NameGenerator
-from preprocess.transform.utils.tools import get_unused_imports, transform
-from preprocess.transform.change_variable_names import ChangeVariableNameTransformer
+from preprocess.transform.utils.tools import get_unused_imports, transform, get_name_generator
 
 
-def augment(source, temp=1, parse_test=False):
+def augment(
+        source,
+        transformers=None,
+        temp=1,
+        preserved_names=None,
+        updated_names=None,
+        parse_test=False
+):
     try:
         source_tree = cst.parse_module(source)
     except:
         raise ValueError("Source code could not be parsed")
 
-    name_generator = NameGenerator(source_tree, set())
-
-    args_list = [
-        (AddNewLineTransformer, (temp,)),
-        (CommaTransformer, (True, temp)),
-        (CommaTransformer, (False, temp)),
-        (ChangeCompToForTransformer, ("list", name_generator, temp)),
-        (ChangeCompToForTransformer, ("set", name_generator, temp)),
-        (ChangeCompToForTransformer, ("dict", name_generator, temp)),
-        (ChangeVariableNameTransformer, (temp,)),
-        (ForToWhileTransformer, (name_generator, temp)),
-        (LambdaToFunctionTransformer, (temp,)),
-        (CombineStatementsTransformer, (temp, temp,)),
-        (ModifyWhiteSpaceTransformer, (True, 0.1 * temp,)),
-        (ModifyWhiteSpaceTransformer, (False, 0.1 * temp,)),
-        (RemoveCommentsTransformer, (temp,)),
-        (RemoveEmptyLineTransformer, (temp,)),
-        (RemoveUnusedImportTransformer, (temp,), get_unused_imports)
-    ]
+    if not transformers:
+        transformers = [
+            (AddNewLineTransformer, (temp,)),
+            (CommaTransformer, (True, temp)),
+            (CommaTransformer, (False, temp)),
+            (ChangeCompToForTransformer, ("list", temp), (get_name_generator, preserved_names,)),
+            (ChangeCompToForTransformer, ("set", temp), (get_name_generator, preserved_names,)),
+            (ChangeCompToForTransformer, ("dict", temp), (get_name_generator, preserved_names,)),
+            (ChangeLocalVariableNameTransformer, (temp,), (get_name_generator, preserved_names,)),
+            (ForToWhileTransformer, (temp,), (get_name_generator, preserved_names,)),
+            (LambdaToFunctionTransformer, (temp,)),
+            (CombineStatementsTransformer, (temp, temp,)),
+            (ModifyWhiteSpaceTransformer, (True, 0.1 * temp,)),
+            (ModifyWhiteSpaceTransformer, (False, 0.1 * temp,)),
+            (RemoveCommentsTransformer, (temp,)),
+            (RemoveEmptyLineTransformer, (temp,)),
+            (RemoveUnusedImportTransformer, (temp,), (get_unused_imports,))
+        ]
 
     log = {}
-    random.shuffle(args_list)
-    for args in args_list:
+    random.shuffle(transformers)
+    for args in transformers:
         try:
             fixed, num_changes = transform(source, *args, **{'parse_test': parse_test})
         except:
@@ -53,10 +58,8 @@ def augment(source, temp=1, parse_test=False):
             print(source)
             raise ValueError()
 
-
         log.update(num_changes)
         source = fixed
-
     return fixed, log
 
 
@@ -64,6 +67,7 @@ if __name__ == '__main__':
     import os
     import gzip
     import json
+
     data_python_dir = "../data/CodeSearchNet/resources/data/python"
     data_python_original_dir = os.path.join(data_python_dir, "final", "jsonl")
     data_python_train_dir = os.path.join(data_python_original_dir, "train")
@@ -99,8 +103,3 @@ if __name__ == '__main__':
 
     with open(save_dir, 'w') as f:
         f.write(json.dumps(new_data))
-
-
-
-
-

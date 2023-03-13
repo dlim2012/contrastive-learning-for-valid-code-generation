@@ -4,7 +4,7 @@ import libcst as cst
 import libcst.matchers as m
 
 
-def get_all_names(source_tree):
+def get_all_names(node):
     class NameVisitor(cst.CSTVisitor):
         def __init__(self):
             self.names = set()
@@ -14,8 +14,69 @@ def get_all_names(source_tree):
             return True
 
     visitor = NameVisitor()
-    source_tree.visit(visitor)
+    node.visit(visitor)
     return visitor.names
+
+
+def get_local_assigntarget_names(node):
+    class GetLocalAssignTargetNames(cst.CSTVisitor):
+        def __init__(self):
+            self.names = set()
+
+        def visit_FunctionDef(self, node: "FunctionDef") -> Optional[bool]:
+            return False
+
+        def visit_ClassDef(self, node: "ClassDef") -> Optional[bool]:
+            return False
+
+        def visit_CompFor(self, node: "CompFor") -> Optional[bool]:
+            return False
+
+        def visit_AssignTarget(self, node: "AssignTarget") -> Optional[bool]:
+            if m.matches(node.target, m.Tuple()):
+                for element in node.target.elements:
+                    if m.matches(element.value, m.Name()):
+                        self.names.add(element.value.value)
+            elif m.matches(node.target, m.Name()):
+                self.names.add(node.target.value)
+            return True
+
+    visitor = GetLocalAssignTargetNames()
+    node.visit(visitor)
+    return visitor.names
+
+
+def get_param_names(node):
+    class GetParamNames(cst.CSTVisitor):
+        def __init__(self):
+            self.names = set()
+
+        def visit_Param(self, node: "Param") -> Optional[bool]:
+            self.names.add(node.name.value)
+            return True
+
+    visitor = GetParamNames()
+    node.visit(visitor)
+    return visitor.names
+
+
+def get_non_local_names(node):
+    class NonLocalAndGlobalNameVisitor(cst.CSTVisitor):
+        def __init__(self):
+            self.name = set()
+
+        def visit_Nonlocal(self, node: "Nonlocal") -> Optional[bool]:
+            self.name |= get_all_names(node)
+            return True
+
+        def visit_Global_semicolon(self, node: "Global") -> None:
+            self.name |= get_all_names(node)
+            return True
+
+    visitor = NonLocalAndGlobalNameVisitor()
+    node.visit(visitor)
+    print(visitor.name)
+    return visitor.name
 
 
 def has_same_name(node, target_names):
@@ -25,7 +86,6 @@ def has_same_name(node, target_names):
             self.target_names = target_names
 
         def visit_Name(self, node: "Name") -> Optional[bool]:
-            # print(node, self.target_names)
             if node.value in self.target_names:
                 self.has_name = True
             return True
@@ -63,6 +123,7 @@ def has_new_line(node):
     node.visit(visitor)
     return visitor.has_new_line
 
+
 def has_comment(node):
     class CommentVisitor(cst.CSTVisitor):
         def __init__(self):
@@ -76,6 +137,7 @@ def has_comment(node):
     node.visit(visitor)
     return visitor.has_comment
 
+
 def has_yield(node):
     class YieldVisitor(cst.CSTVisitor):
         def __init__(self):
@@ -88,4 +150,3 @@ def has_yield(node):
     visitor = YieldVisitor()
     node.visit(visitor)
     return visitor.has_yield
-

@@ -4,6 +4,8 @@ from typing import Dict, Union, Set
 
 import libcst as cst
 
+from preprocess.transform.utils.new_names import NameGenerator
+
 
 def transform(source, transformer_class, args, get_metadata=None, parse_test=False):
     try:
@@ -11,7 +13,7 @@ def transform(source, transformer_class, args, get_metadata=None, parse_test=Fal
     except:
         raise ValueError("Source code could not be parsed")
     if get_metadata:
-        wrapper, metadata = get_metadata(source_module)
+        wrapper, metadata = get_metadata[0](source_module, *get_metadata[1:])
         transformer = transformer_class(metadata, *args)
     else:
         wrapper = cst.metadata.MetadataWrapper(source_module)
@@ -22,9 +24,14 @@ def transform(source, transformer_class, args, get_metadata=None, parse_test=Fal
         try:
             cst.parse_module(fixed)
         except:
-            print(transformer, args, get_metadata)
             print_code_diff(source, fixed, show_diff=True)
     return fixed, transformer.get_logs()
+
+
+def get_name_generator(source_module, preserved_names):
+    name_generator = NameGenerator(source_module, preserved_names)
+    wrapper = cst.metadata.MetadataWrapper(source_module)
+    return wrapper, name_generator
 
 
 def get_unused_imports(source_module):
@@ -47,12 +54,13 @@ def get_undefined_references(source):
     scopes = set(wrapper.resolve(cst.metadata.ScopeProvider).values())
     ranges = wrapper.resolve(cst.metadata.PositionProvider)
     undefined_references: Dict[cst.CSTNode, Set[str]] = defaultdict(set)
+    references = defaultdict(set)
     for scope in scopes:
+
         for assignment in scope.assignments:
             node = assignment.node
-            if isinstance(assignment, cst.metadata.Assignment) and isinstance(node, (cst.Import, cst.ImportFrom)):
-                continue
             for access in scope.accesses:
+                references[node].add(assignment.name)
                 if len(access.referents) == 0:
                     undefined_references[node].add(assignment.name)
                     node = access.node

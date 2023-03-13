@@ -1,0 +1,5 @@
+
+preprocess/.DS_Store
+*.pyc
+.DS_Store
+preprocess/ex.py

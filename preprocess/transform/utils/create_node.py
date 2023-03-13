@@ -46,6 +46,7 @@ def create_assign_statement(target, value, leading_lines=()):
     )
     return assign_assignment
 
+
 def create_assign_plural(targets, values):
     def hasParenthesizedWhitespace(elements):
         for element in elements:
@@ -67,7 +68,6 @@ def create_assign_plural(targets, values):
     target_parenthesis = hasParenthesizedWhitespace(targets)
     value_parenthesis = hasParenthesizedWhitespace(values)
 
-
     assign = cst.Assign(
         targets=(
             cst.AssignTarget(
@@ -88,6 +88,7 @@ def create_assign_plural(targets, values):
 
     )
     return assign
+
 
 def create_assign_statement_plural(targets, values, leading_lines=()):
     assign = create_assign_plural(targets, values)

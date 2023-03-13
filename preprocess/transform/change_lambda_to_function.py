@@ -24,6 +24,7 @@ class LambdaToFunctionTransformer(ModifyAfterExtractionTransformer):
     def get_logs(self):
         return {"lambda_to_function": self.num_changes}
 
+
 def change_lambda_to_function(source, p=1):
     source_tree = cst.parse_module(source)
     fixed_module, num_changes = modify_after_extraction(source_tree, [m.Lambda()], [m.Name()], _lambda_to_function, p=p)

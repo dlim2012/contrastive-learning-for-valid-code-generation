@@ -7,7 +7,7 @@ import libcst.matchers as m
 
 from preprocess.transform.utils.create_node import create_expr_statement, create_subscr_assignment, \
     create_assign_statement
-from preprocess.transform.utils.modify_after_extraction import modify_after_extraction, ModifyAfterExtractionTransformer
+from preprocess.transform.utils.modify_after_extraction import ModifyAfterExtractionTransformer
 from preprocess.transform.utils.transform_node import add_parenthesis_if_new_line
 
 
@@ -104,7 +104,7 @@ def _comp_to_for_loops(target, value, name_generator):
 
 
 class ChangeCompToForTransformer(ModifyAfterExtractionTransformer):
-    def __init__(self, comp_type, name_generator, p=1):
+    def __init__(self, name_generator, comp_type, p=1):
         value_types = {"list": [m.ListComp()], "set": [m.SetComp()], "dict": [m.DictComp()]}[comp_type]
         target_types = [m.Name(), m.Attribute()]
         super().__init__(value_types, target_types, _comp_to_for_loops, name_generator, p=p)

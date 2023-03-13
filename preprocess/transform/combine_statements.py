@@ -56,7 +56,7 @@ class CombineStatementsTransformer(cst.CSTTransformer):
             self.new_body_element.append(self.part)
         elif self.targets:
             self.num_combines += 1
-            self.new_body_element.append(create_assign_plural(self.targets,self.values))
+            self.new_body_element.append(create_assign_plural(self.targets, self.values))
 
         if part:
             self.new_body_element.append(part)
@@ -69,7 +69,7 @@ class CombineStatementsTransformer(cst.CSTTransformer):
             self.new_body.append(cst.SimpleStatementLine((self.part,)))
         elif self.targets:
             self.num_combines += 1
-            self.new_body.append(create_assign_statement_plural(self.targets,self.values))
+            self.new_body.append(create_assign_statement_plural(self.targets, self.values))
 
         if part:
             self.new_body.append(part)
@@ -172,7 +172,6 @@ class CombineStatementsTransformer(cst.CSTTransformer):
                     # some comments and whitespace may be lost here
                     self.new_body += list(body_element.leading_lines)
 
-
             if self.targets:
                 self._append_to_new_body()
             self.new_body = tuple(self.new_body)
@@ -210,7 +209,6 @@ func(a)
 a =    func(); b = func()
 
 '''
-
 
     from preprocess.transform.utils.tools import transform, print_code_diff
 
