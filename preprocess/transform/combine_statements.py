@@ -53,7 +53,7 @@ class CombineStatementsTransformer(cst.CSTTransformer):
 
     def _append_to_new_body_element(self, part=None):
         if self.num_parts == 1:
-            self.new_body_element.append(self.part)
+            self.new_body_element.append(self.part.deep_clone())
         elif self.targets:
             self.num_combines += 1
             self.new_body_element.append(create_assign_plural(self.targets, self.values))
@@ -66,7 +66,7 @@ class CombineStatementsTransformer(cst.CSTTransformer):
 
     def _append_to_new_body(self, part=None):
         if self.num_parts == 1:
-            self.new_body.append(cst.SimpleStatementLine((self.part,)))
+            self.new_body.append(cst.SimpleStatementLine((self.part.deep_clone(),)))
         elif self.targets:
             self.num_combines += 1
             self.new_body.append(create_assign_statement_plural(self.targets, self.values))
@@ -93,7 +93,6 @@ class CombineStatementsTransformer(cst.CSTTransformer):
             self.targets, self.values, self.target_names = [], [], set()
             self.part, self.num_parts = None, 0
             for body_element in body:
-
                 # stop randomly attempt to modify
                 if self.p != 1 and random.random() > self.p:
                     self._append_to_new_body(body_element)
@@ -109,26 +108,27 @@ class CombineStatementsTransformer(cst.CSTTransformer):
 
                     # stop if the part is not an assign node
                     if not m.matches(part, m.Assign()):
-                        self._append_to_new_body_element(part)
+                        self._append_to_new_body_element(part.deep_clone())
                         continue
 
                     # stop if number of targets and values doesn't match (e.g., 't = 1, 2')
                     if m.matches(part.value, m.Tuple()):
                         if not m.matches(part.targets[0].target, m.Tuple()) \
                                 or len(part.targets[0].target.elements) != len(part.value.elements):
-                            self._append_to_new_body_element(part)
+                            self._append_to_new_body_element(part.deep_clone())
                             continue
 
                     # stop if any value that will be assigned is in the targets
                     for assign_target in part.targets:
                         self.target_names = self.target_names.union(get_all_names(assign_target))
                     if has_same_name(part.value, self.target_names):
-                        self._append_to_new_body_element(part)
+                        self._append_to_new_body_element(part.deep_clone())
                         continue
 
                     # split if any value has keyword "yield"
                     if has_yield(part):
-                        self._append_to_new_body(part)
+                        self._append_to_new_body_element(part.deep_clone())
+                        self._append_to_new_body()
                         continue
 
                     # split randomly with a pre-defined ratio
@@ -171,7 +171,6 @@ class CombineStatementsTransformer(cst.CSTTransformer):
                 else:
                     # some comments and whitespace may be lost here
                     self.new_body += list(body_element.leading_lines)
-
             if self.targets:
                 self._append_to_new_body()
             self.new_body = tuple(self.new_body)
@@ -209,12 +208,21 @@ func(a)
 a =    func(); b = func()
 
 '''
+    source = '''
+def _uncrypted_transfer(self, load, tries=3, timeout=60):
+    ret = self.message_client.send(
+        self._package_load(load),
+        timeout=timeout,
+        tries=tries,
+    )
+
+    raise tornado.gen.Return(ret)
+    '''
 
     from preprocess.transform.utils.tools import transform, print_code_diff
 
     args = (1, 1,)
     fixed, num_changes = transform(source, CombineStatementsTransformer, args)
-
     print_code_diff(source, fixed)
     cst.parse_module(fixed)
     print(num_changes)

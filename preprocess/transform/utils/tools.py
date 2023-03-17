@@ -19,12 +19,20 @@ def transform(source, transformer_class, args, get_metadata=None, parse_test=Fal
         wrapper = cst.metadata.MetadataWrapper(source_module)
         transformer = transformer_class(*args)
 
-    fixed = wrapper.visit(transformer).code
+    try:
+        fixed = wrapper.visit(transformer).code
+    except:
+        print(args)
+        print(source)
+        raise RuntimeError()
+
     if parse_test:
         try:
             cst.parse_module(fixed)
         except:
+            print(args)
             print_code_diff(source, fixed, show_diff=True)
+            raise ValueError()
     return fixed, transformer.get_logs()
 
 

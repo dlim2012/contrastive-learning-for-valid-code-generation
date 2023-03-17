@@ -75,7 +75,6 @@ def get_non_local_names(node):
 
     visitor = NonLocalAndGlobalNameVisitor()
     node.visit(visitor)
-    print(visitor.name)
     return visitor.name
 
 

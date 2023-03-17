@@ -127,36 +127,6 @@ def func(a):
     p = [{key: value for key, value in d.items()} for d in dd]
     return a
 '''
-    source = '''
-def consume(v0, v1, msg):
-
-    """
-    Consumer for this (CaptureData) class. Gets the data sent from yieldMetricsValue and
-    sends it to the storage backends.
-    """
-
-
-    v2 ,builder_info = msg['build_data'], yield v0.v3.v4.get(("builders", v2['builderid' ]))
-
-    if  v0._builder_name_matches( builder_info) and v0 .v5 == msg['data_name']:
-        try:
-            ret_val = v0._callback(msg['post_data'])
-
-        except Exception as e:
-
-            raise v6("CaptureData failed for build %s of builder %s."
-
-                                       " Exception generated: %s with message %s"
-                                       % (v2[ 'number'], builder_info ['name' ],
-
-                                          type(e).__name__, str (e),))
-
-        post_data  = ret_val
-        series_name = '%s-%s' % (builder_info['name'], v0.v5)
-        context = v0.v7(v2, builder_info['name']) 
-
-        yield v0.v8(post_data, series_name, context)
-    '''
     from preprocess.transform.utils.tools import transform, print_code_diff
     from preprocess.transform.utils.new_names import NameGenerator
 
@@ -169,10 +139,12 @@ def consume(v0, v1, msg):
     name_generator = NameGenerator(source_tree, set())
     p = 1
     for comp_type in ["list", "set", "dict"]:
-        fixed, num_changes = transform(source, ChangeCompToForTransformer, (comp_type, name_generator, p))
+        fixed, num_changes = transform(source, ChangeCompToForTransformer, (name_generator, comp_type, p))
         print(num_changes)
         print_code_diff(source, fixed)
         cst.parse_module(fixed)
         log.update(num_changes)
         source = fixed
     print(log)
+
+    cst.parse_module(fixed)

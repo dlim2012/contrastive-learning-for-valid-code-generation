@@ -1,9 +1,5 @@
 """
-Implementing changing variable over python files in a package
-- First get all import names and imported variables' attributes since they must not change
-- unify name transformations
-- Do not rename any attributes of a class (field, method, argument, ...) due to hasattr() and **kwargs
-
+Changing local variable names in function definitions when nonlocal is not used in a child scope
 """
 
 import random
@@ -48,7 +44,7 @@ class ChangeLocalVariableNameTransformer(cst.CSTTransformer):
     ) -> Union["BaseStatement", FlattenSentinel["BaseStatement"], RemovalSentinel]:
 
         if not m.matches(original_node.body, m.IndentedBlock()):
-            print("Corner case not implemented")
+            print("Corner case not implemented.")
             return updated_node
 
         local_exclude_names = {updated_node.name.value} \
@@ -96,15 +92,19 @@ def transform(source, transformer_class, args, get_metadata=None, parse_test=Fal
 
     source = '''
 def func():
-    nonlocal a
+    a = 1
+    def func2():
+        nonlocal a
+        return
     global b
     '''
+
 
     from preprocess.transform.utils.tools import transform, print_code_diff
 
     name_generator = NameGenerator(cst.parse_module(source), set())
 
-    p = 1
+    p = 0.2
     args = (name_generator, p)
     fixed, num_changes = transform(source, ChangeLocalVariableNameTransformer, args)
 
