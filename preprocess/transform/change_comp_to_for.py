@@ -55,13 +55,11 @@ def _elt_to_body(target, comp_node, name_generator):
 
     if m.matches(comp_node.elt, m.ListComp()):
         new_structure = cst.List([])
-        assign_statement = create_assign_statement(new_var, new_structure)
     elif m.matches(comp_node.elt, m.SetComp()):
         new_structure = cst.Call(cst.Name("set"))
-        assign_statement = create_assign_statement(new_var, new_structure)
     else:
         new_structure = cst.Dict([])
-        assign_statement = create_assign_statement(new_var, new_structure)
+    assign_statement = create_assign_statement(new_var, new_structure)
 
     for_statement = _for_loops(comp_node.elt.for_in.target, comp_node.elt.for_in, new_body)[0]
 
@@ -70,7 +68,7 @@ def _elt_to_body(target, comp_node, name_generator):
     elif m.matches(comp_node, m.SetComp()):
         append_statement = create_expr_statement(target, new_var, cst.Name("add"))
     else:
-        append_statement = create_expr_statement(target, new_var, cst.Name("add"))
+        raise ValueError()
 
     return (assign_statement, for_statement, append_statement,)
 

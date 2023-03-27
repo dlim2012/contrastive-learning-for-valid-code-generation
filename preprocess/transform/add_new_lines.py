@@ -26,6 +26,7 @@ class AddNewLineTransformer(cst.CSTTransformer):
     ) -> "MyNewline":
         if self.p != 1 and random.random() > self.p:
             return updated_node
+        self.num_changes += 1
         return self.MyNewline("\n\n")
 
 

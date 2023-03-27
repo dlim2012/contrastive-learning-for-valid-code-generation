@@ -64,7 +64,6 @@ def get_undefined_references(source):
     undefined_references: Dict[cst.CSTNode, Set[str]] = defaultdict(set)
     references = defaultdict(set)
     for scope in scopes:
-
         for assignment in scope.assignments:
             node = assignment.node
             for access in scope.accesses:

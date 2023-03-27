@@ -44,7 +44,6 @@ class ChangeLocalVariableNameTransformer(cst.CSTTransformer):
     ) -> Union["BaseStatement", FlattenSentinel["BaseStatement"], RemovalSentinel]:
 
         if not m.matches(original_node.body, m.IndentedBlock()):
-            print("Corner case not implemented.")
             return updated_node
 
         local_exclude_names = {updated_node.name.value} \

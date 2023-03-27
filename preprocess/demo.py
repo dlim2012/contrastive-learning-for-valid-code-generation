@@ -18,7 +18,7 @@ from preprocess.transform.utils.tools import get_unused_imports, transform, get_
 
 def augment(source, temp=1, preserved_names: dict = None, parse_test=False):
     try:
-        source_tree = cst.parse_module(source)
+        cst.parse_module(source)
     except:
         raise ValueError("Source code could not be parsed")
 
