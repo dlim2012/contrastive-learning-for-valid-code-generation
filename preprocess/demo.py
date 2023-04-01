@@ -74,6 +74,8 @@ def expand_compositor_keys(cls, spec):
             expanded_spec[str(type_name+'.'+key)] = val
     return expanded_spec, applied_keys
     '''
+    cst.parse_module(source)
+
     while True:
         fixed, log = augment(source, parse_test=True)
         from preprocess.transform.utils.tools import print_code_diff

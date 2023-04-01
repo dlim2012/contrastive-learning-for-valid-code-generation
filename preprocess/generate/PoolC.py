@@ -1,4 +1,4 @@
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from argparse import ArgumentParser
 import libcst as cst
 from tqdm_pathos import starmap
@@ -8,7 +8,6 @@ import os
 import json
 from datetime import date
 
-from preprocess.transform.utils.tools import transform
 from preprocess.augment import augment
 
 
@@ -20,10 +19,15 @@ def parse_PoolC():
                         help='Temperature for transformation (0.0-1.0)')
     parser.add_argument('--data_dir', '-d', type=str, default="/mnt/ssd/696ds_data/PoolC",
                         help='data dir')
+    parser.add_argument('--dataset_name', '-name', type=str, default="PoolC/1-fold-clone-detection-600k-5fold",
+                        help='dataset name or path')
+    parser.add_argument('--load_from_disk', '-ld', action='store_true')
     parser.add_argument('--mode', '-m', type=str, default='train',
                         help='mode: train, val')
     parser.add_argument('--postfix', '-pf', type=str, default='',
                         help='postfix to save path')
+    parser.add_argument('--num_datapoint', '-n', type=int, default=33000,
+                        help='number of datapoint to augment')
 
     args = parser.parse_args()
 
@@ -55,12 +59,18 @@ def filter_valid_parse(data):
 
 def generate(args):
     """ Note: did not remove docstrings in this case """
-    dataset = load_dataset("PoolC/1-fold-clone-detection-600k-5fold", split="train")
-    dataset = [[data] for data in tqdm(dataset)]
+    if args.load_from_disk:
+        _dataset = load_from_disk(args.dataset_name)[args.mode]
+    else:
+        _dataset = load_dataset(args.dataset_name, split=args.mode)
+    dataset = []
+    for i in tqdm(range(min(args.num_datapoint, len(_dataset)))):
+        dataset.append([_dataset[i]])
 
     # filter by parse test
     print('parse test...')
     dataset = [data for data in starmap(filter_valid_parse, dataset) if data]
+    dataset = dataset[:args.num_datapoint]
 
     print('augment...')
     results = {}
@@ -70,8 +80,9 @@ def generate(args):
             [(data[key], [], float(p), None, True) for data in dataset for p in args.p]
         )
 
+    print('save...')
     new_json_list = []
-    for i, data in enumerate(dataset):
+    for i, data in tqdm(enumerate(dataset)):
         new_json_item = {
             'original': data,
             'augmented': [

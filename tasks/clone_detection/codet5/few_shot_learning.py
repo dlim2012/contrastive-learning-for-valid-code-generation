@@ -20,10 +20,10 @@ def parse():
     #                         Learning rate will decay afterwards.
     #                         No learning rate scheduling if 0 is given
     #                     """)
-    parser.add_argument('--batch_size', '-bs', type=int, default=4,
-                        help="batch size")
-    # parser.add_argument('--model_name', '-m', type=str, default="microsoft/codebert-base",
-    #                     help="pretrained model name") # "microsoft/codebert-base"
+    # parser.add_argument('--batch_size', '-bs', type=int, default=4,
+    #                     help="batch size")
+    parser.add_argument('--model_name', '-m', type=str, default='Salesforce/codet5-base',
+                        help="pretrained model name") # "Salesforce/codet5-large"
     # parser.add_argument('--version_name_prefix', '-v', type=str, default='v',
     #                     help="Prefix for name used for logging and checkpoints")
     # parser.add_argument('--log_dir', '-log_dir', type=str, default='log',
@@ -32,6 +32,7 @@ def parse():
     #                     help="base checkpoint directory") # /mnt/ssd/696ds/checkpoints
 
     args = parser.parse_args()
+    print(args)
     return args
 
 def tokenize(code):
@@ -44,18 +45,19 @@ def predict(out):
     if i1 == -1 and i2 == -1:
         return -1 # invalid
     if i1 == -1:
-        return False
+        return 0
     if i2 == -1:
-        return True
-    return i1 < i2
+        return 1
+    return 1 if i1 < i2 else 0
 
 
 if __name__ == '__main__':
+    args = parse()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    tokenizer = RobertaTokenizer.from_pretrained('Salesforce/codet5-large')
-    model = T5ForConditionalGeneration.from_pretrained('Salesforce/codet5-large').to(device)
+    tokenizer = RobertaTokenizer.from_pretrained(args.model_name)
+    model = T5ForConditionalGeneration.from_pretrained(args.model_name).to(device)
 
     dataset = load_dataset("PoolC/1-fold-clone-detection-600k-5fold", split="train")
 

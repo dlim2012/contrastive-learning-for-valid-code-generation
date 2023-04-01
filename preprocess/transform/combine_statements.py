@@ -117,6 +117,9 @@ class CombineStatementsTransformer(cst.CSTTransformer):
                                 or len(part.targets[0].target.elements) != len(part.value.elements):
                             self._append_to_new_body_element(part.deep_clone())
                             continue
+                    elif m.matches(part.targets[0].target, m.Tuple()):
+                        self._append_to_new_body_element(part.deep_clone())
+                        continue
 
                     # stop if any value that will be assigned is in the targets
                     for assign_target in part.targets:
@@ -209,14 +212,9 @@ a =    func(); b = func()
 
 '''
     source = '''
-def _uncrypted_transfer(self, load, tries=3, timeout=60):
-    ret = self.message_client.send(
-        self._package_load(load),
-        timeout=timeout,
-        tries=tries,
-    )
+a = b
 
-    raise tornado.gen.Return(ret)
+c, d = f(g, h)
     '''
 
     from preprocess.transform.utils.tools import transform, print_code_diff

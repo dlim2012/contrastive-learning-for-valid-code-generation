@@ -18,7 +18,7 @@ from preprocess.transform.utils.tools import get_unused_imports, transform, get_
 
 def augment(
         source,
-        transformers=None,
+        args_list=None,
         temp=1,
         preserved_names=None,
         parse_test=True
@@ -28,9 +28,9 @@ def augment(
     except:
         raise ValueError("Source code could not be parsed")
 
-    if not transformers:
-        transformers = [
-            (AddNewLineTransformer, (temp,)),
+    if not args_list:
+        args_list = [
+            (AddNewLineTransformer, (0.5 * temp,)),
             (CommaTransformer, (True, temp)),
             (CommaTransformer, (False, temp)),
             (ChangeCompToForTransformer, ("list", temp), (get_name_generator, preserved_names,)),
@@ -43,13 +43,13 @@ def augment(
             (ModifyWhiteSpaceTransformer, (True, 0.1 * temp,)),
             (ModifyWhiteSpaceTransformer, (False, 0.1 * temp,)),
             (RemoveCommentsTransformer, (temp,)),
-            (RemoveEmptyLineTransformer, (temp,)),
+            (RemoveEmptyLineTransformer, (0.5 * temp,)),
             (RemoveUnusedImportTransformer, (temp,), (get_unused_imports,))
         ]
 
     log = {}
-    random.shuffle(transformers)
-    for args in transformers:
+    random.shuffle(args_list)
+    for args in args_list:
         fixed, num_changes = transform(source, *args, **{'parse_test': parse_test})
 
         log.update(num_changes)

@@ -56,8 +56,8 @@ class CloneDetector(torch.nn.Module):
         out1 = self.model(**code1).last_hidden_state[:, 0, :] # CLS vector (shape: (B, 768, ))
         out2 = self.model(**code2).last_hidden_state[:, 0, :]
 
-        out1 = self.dropout(out1) # (shape: (B, 768, ))
-        out2 = self.dropout(out2)
+        # out1 = self.dropout(out1) # (shape: (B, 768, ))
+        # out2 = self.dropout(out2)
 
         out1 = self.linear(out1) # (shape: (B, 768, ))
         out2 = self.linear(out2)
